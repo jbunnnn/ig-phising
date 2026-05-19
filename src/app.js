@@ -1,13 +1,40 @@
 import express from 'express';
-import { configureExpress } from './config/express.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { ipMiddleware } from './middleware/ipMiddleware.js';
 import authRoutes from './routes/authRoutes.js';
+import './config/db.js';
+
+dotenv.config();
+
+// _dirname untuk ES Module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Konfigurasi express (middleware, static, dll)
-configureExpress(app);
+// Cors
+app.use(cors());
 
-// Routes
+// parsing body json ke body
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// Static files (folder public)
+const publicPath = path.join(__dirname, '../public');
+app.use(express.static(publicPath));
+
+// IP Middleware
+app.use(ipMiddleware);
+
+// Homepage
+app.get('/', (req, res) => {
+    res.sendFile(path.join(publicPath, 'index.html'));
+});
+
+// auth routes 
 app.use('/', authRoutes);
 
 export default app;
